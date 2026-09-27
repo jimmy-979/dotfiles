@@ -1,0 +1,42 @@
+# --------------------------------------------------------------------------- #
+# common
+# --------------------------------------------------------------------------- #
+[packages.common]
+
+[packages.common.debian]
+provider = "apt"
+name = [
+    "build-essential",
+    "man",
+    "eza",
+]
+
+[packages.common.arch]
+provider = "pacman"
+name = [
+    "base-devel",
+    "man",
+    "eza",
+]
+
+# --------------------------------------------------------------------------- #
+# zsh
+# --------------------------------------------------------------------------- #
+[packages.zsh]
+command = "zsh"
+
+[packages.zsh.debian]
+provider = "apt"
+name = "zsh"
+
+[packages.zsh.arch]
+provider = "pacman"
+name = "zsh"
+
+[[packages.zsh.config]]
+source = "config/zsh/.zshenv"
+destination = "~/.zshenv"
+
+[[packages.zsh.config]]
+source = "config/zsh/config"
+destination = "~/.config/zsh"
