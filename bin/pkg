@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env python3
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+from src.cli import run_cli
 
-exec python3 "$SCRIPT_DIR/../src/pkg.py" "$@"
+if __name__ == "__main__":
+    run_cli()

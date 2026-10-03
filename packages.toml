@@ -5,19 +5,7 @@
 
 [packages.common.debian]
 provider = "apt"
-name = [
-    "build-essential",
-    "man",
-    "eza",
-]
-
-[packages.common.arch]
-provider = "pacman"
-name = [
-    "base-devel",
-    "man",
-    "eza",
-]
+name = ["build-essential", "man", "eza"]
 
 # --------------------------------------------------------------------------- #
 # zsh
@@ -29,10 +17,6 @@ command = "zsh"
 provider = "apt"
 name = "zsh"
 
-[packages.zsh.arch]
-provider = "pacman"
-name = "zsh"
-
 [[packages.zsh.config]]
 source = "config/zsh/.zshenv"
 destination = "~/.zshenv"
@@ -40,3 +24,36 @@ destination = "~/.zshenv"
 [[packages.zsh.config]]
 source = "config/zsh/config"
 destination = "~/.config/zsh"
+
+# --------------------------------------------------------------------------- #
+# verible
+# --------------------------------------------------------------------------- #
+[packages.verible]
+command = "verible"
+name = "verible"
+
+[packages.verible.debian]
+provider = "github"
+repo = "chipsalliance/verible"
+type = "archive"
+binary_dir = "bin"
+
+[packages.verible.debian.assets.arm64]
+name = "verible-.*-linux-static-arm64.tar.gz"
+
+# --------------------------------------------------------------------------- #
+# oss-cad suite
+# --------------------------------------------------------------------------- #
+[packages.oss-cad-suite]
+name = "oss-cad-suite"
+
+[packages.oss-cad-suite.debian]
+provider = "github"
+repo = "YosysHQ/oss-cad-suite-build"
+type = "archive"
+binary_dir = "bin"
+lib_dir = "lib"
+libexec_dir = "libexec"
+
+[packages.oss-cad-suite.debian.assets.arm64]
+name = "oss-cad-suite-linux-arm64-.*.tgz"

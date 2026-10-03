@@ -5,6 +5,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+export PATH="$HOME/.local/bin:$PATH"
+
 # source antidote
 source ${ZDOTDIR:-$HOME}/.antidote/antidote.zsh
 
@@ -29,13 +31,6 @@ bindkey '^[[1;5C' forward-word
 # Ctrl + Delete: delete word to the right
 bindkey '^[[3;5~' kill-word
 
-alias ls='eza --icons'
-alias l='eza -l --icons --group-directories-first'
-alias la='eza -a --icons --group-directories-first'
-alias ll='eza -lah --icons --group-directories-first'
-
-alias tree='eza --tree --icons --group-directories-first'
-
 # Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
 HISTSIZE=1000
 SAVEHIST=1000
@@ -44,6 +39,8 @@ HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 # Use modern completion system
 autoload -Uz compinit
 compinit
+
+setopt complete_aliases
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
@@ -62,6 +59,13 @@ zstyle ':completion:*' verbose true
 
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+
+# eza
+alias ls='eza --icons'
+alias l='eza -l --icons --group-directories-first'
+alias la='eza -a --icons --group-directories-first'
+alias ll='eza -lah --icons --group-directories-first'
+alias tree='eza --tree --icons --group-directories-first'
 
 # To customize prompt, run `p10k configure` or edit ~/.config/zsh/.p10k.zsh.
 [[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh

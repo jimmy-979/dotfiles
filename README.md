@@ -1,16 +1,25 @@
 # `packages.toml` Documentation
 
 This document describes the structure and available options for the
+
 `packages.toml` manifest used by `pkg`.
 
 The manifest describes:
 
 -   Logical packages managed by `pkg`
+
 -   The provider used on each Linux distribution
+
 -   Package names for system package managers
+
 -   GitHub AppImage releases
+
+GitHub compressed archives (e.g. .tar.gz)
+
 -   Architecture-specific GitHub assets
+
 -   Configuration files and where they should be linked
+
 -   Groups containing multiple system packages
 
 ------------------------------------------------------------------------
@@ -20,27 +29,37 @@ The manifest describes:
 All package definitions live under:
 
 ``` toml
+
 [packages.<package-name>]
+
 ```
 
 For example:
 
 ``` toml
+
 [packages.zsh]
+
 command = "zsh"
+
 ```
 
 The name (`zsh` in this example) is the logical name used by `pkg`:
 
 ``` bash
+
 pkg install zsh
+
 ```
 
 If no package names are given to `pkg install`, all packages in the
+
 manifest are processed:
 
 ``` bash
+
 pkg install
+
 ```
 
 ------------------------------------------------------------------------
@@ -48,26 +67,35 @@ pkg install
 # 2. `command`
 
 The optional `command` field specifies the executable that represents
+
 the package.
 
 ``` toml
+
 [packages.zsh]
+
 command = "zsh"
+
 ```
 
 This is particularly useful for `pkg check`, because `pkg` can use the
+
 command to determine whether the package is installed.
 
 For example:
 
 ``` toml
+
 [packages.neovim]
+
 command = "nvim"
+
 ```
 
 The logical package name is `neovim`, while the executable is `nvim`.
 
 If `command` is omitted, `pkg` uses the logical package name as the
+
 command when checking the package.
 
 ------------------------------------------------------------------------
@@ -77,20 +105,27 @@ command when checking the package.
 Each package can have a section for the supported distribution:
 
 ``` toml
+
 [packages.zsh.debian]
+
 ```
 
 or:
 
 ``` toml
+
 [packages.zsh.arch]
+
 ```
 
 Currently supported distributions are:
 
 | Distribution      | Manifest section   |
+
 | ----------------- | ------------------ |
+
 | Debian / Ubuntu   | `debian`           |
+
 | Arch Linux        | `arch`             |
 
 `pkg` detects the current distribution automatically.
@@ -98,17 +133,25 @@ Currently supported distributions are:
 For example, on Debian:
 
 ``` toml
+
 [packages.zsh.debian]
+
 provider = "apt"
+
 name = "zsh"
+
 ```
 
 On Arch:
 
 ``` toml
+
 [packages.zsh.arch]
+
 provider = "pacman"
+
 name = "zsh"
+
 ```
 
 ------------------------------------------------------------------------
@@ -120,16 +163,23 @@ The `provider` field specifies how the package is installed.
 Currently available providers are:
 
 -   `apt`
+
 -   `pacman`
+
 -   `aur`
+
 -   `github`
 
 Example:
 
 ``` toml
+
 [packages.zsh.debian]
+
 provider = "apt"
+
 name = "zsh"
+
 ```
 
 ------------------------------------------------------------------------
@@ -137,14 +187,19 @@ name = "zsh"
 # 5. `name`
 
 For `apt`, `pacman`, and `aur`, the `name` field specifies the package
+
 name.
 
 ## Single package
 
 ``` toml
+
 [packages.zsh.debian]
+
 provider = "apt"
+
 name = "zsh"
+
 ```
 
 ## Multiple packages
@@ -152,23 +207,37 @@ name = "zsh"
 `name` can also be a list:
 
 ``` toml
+
 [packages.common.debian]
+
 provider = "apt"
+
 name = [
-    "eza",
-    "build-essential",
+
+"eza",
+
+"build-essential",
+
 ]
+
 ```
 
 On Arch, the equivalent can use Arch-specific package names:
 
 ``` toml
+
 [packages.common.arch]
+
 provider = "pacman"
+
 name = [
-    "eza",
-    "base-devel",
+
+"eza",
+
+"base-devel",
+
 ]
+
 ```
 
 This allows one logical package to represent a group of system packages.
@@ -176,7 +245,9 @@ This allows one logical package to represent a group of system packages.
 For example:
 
 ``` bash
+
 pkg install common
+
 ```
 
 can install multiple packages in one operation.
@@ -188,22 +259,35 @@ can install multiple packages in one operation.
 Use the `apt` provider for Debian/Ubuntu packages.
 
 ``` toml
+
 [packages.zsh.debian]
+
 provider = "apt"
+
 name = "zsh"
+
 ```
 
 Multiple packages:
 
 ``` toml
+
 [packages.common.debian]
+
 provider = "apt"
+
 name = [
-    "eza",
-    "build-essential",
-    "cmake",
-    "ninja-build",
+
+"eza",
+
+"build-essential",
+
+"cmake",
+
+"ninja-build",
+
 ]
+
 ```
 
 `pkg` installs these using `apt-get`.
@@ -213,25 +297,39 @@ name = [
 # 7. Pacman
 
 Use the `pacman` provider for packages available in the Arch
+
 repositories.
 
 ``` toml
+
 [packages.zsh.arch]
+
 provider = "pacman"
+
 name = "zsh"
+
 ```
 
 Multiple packages:
 
 ``` toml
+
 [packages.common.arch]
+
 provider = "pacman"
+
 name = [
-    "eza",
-    "base-devel",
-    "cmake",
-    "ninja",
+
+"eza",
+
+"base-devel",
+
+"cmake",
+
+"ninja",
+
 ]
+
 ```
 
 `pkg` installs these using `pacman -S`.
@@ -243,20 +341,31 @@ name = [
 Use the `aur` provider for packages from the Arch User Repository.
 
 ``` toml
+
 [packages.some-tool.arch]
+
 provider = "aur"
+
 name = "some-tool"
+
 ```
 
 Multiple AUR packages can also be specified:
 
 ``` toml
+
 [packages.aur-tools.arch]
+
 provider = "aur"
+
 name = [
-    "package-one",
-    "package-two",
+
+"package-one",
+
+"package-two",
+
 ]
+
 ```
 
 The current implementation uses `yay` for the AUR provider.
@@ -267,75 +376,186 @@ The current implementation uses `yay` for the AUR provider.
 
 # 9. GitHub Releases
 
-The `github` provider is intended for applications distributed through
+The github provider is intended for applications distributed through
 GitHub releases.
 
-Currently the supported GitHub package type is:
+Currently supported GitHub package types are:
 
-``` toml
 type = "appimage"
-```
+
+and:
+
+type = "archive"
+
+The repository is specified as:
+
+repo = "owner/repository"
+
+pkg queries the latest GitHub release and downloads the appropriate
+release asset.
+
+## 9.1 GitHub AppImage
+
+Use type = "appimage" for applications distributed as AppImages.
 
 Example:
-
-``` toml
+```toml
 [packages.neovim.debian]
 provider = "github"
 repo = "neovim/neovim"
 type = "appimage"
 ```
+The AppImage is installed under:
 
-The repository is specified as:
+```bash
+~/.local/opt/<package>/<version>/
+```
 
-``` toml
-repo = "owner/repository"
+and a symlink is created in:
+
+```bash
+~/.local/bin/<command>
+```
+
+## 9.2 GitHub Archive
+
+Use type = "archive" for applications distributed as compressed
+archives such as .tar.gz.
+
+Example:
+
+```toml
+[packages.mytool.debian]
+provider = "github"
+repo = "owner/mytool"
+type = "archive"
+binaries = ["mytool"]
+
+[packages.mytool.debian.assets.x86_64]
+name = "mytool-linux-x86_64.tar.gz"
+
+[packages.mytool.debian.assets.arm64]
+name = "mytool-linux-arm64.tar.gz"
+```
+
+The archive is downloaded and extracted under:
+
+```bash
+~/.local/opt/<package>/<version>/
+```
+
+The files listed in binaries are then linked into:
+
+```bash
+~/.local/bin/
 ```
 
 For example:
 
-``` toml
-repo = "neovim/neovim"
+```bash
+~/.local/opt/mytool/v1.2.3/
+└── mytool
+
+~/.local/bin/mytool
+    -> ~/.local/opt/mytool/v1.2.3/mytool
 ```
 
-`pkg` queries the latest GitHub release and downloads the appropriate
-release asset.
+### binaries
+
+binaries specifies the files inside the archive that should be exposed
+as commands.
+
+A single binary can be specified as a string:
+
+binaries = "mytool"
+
+or multiple binaries can be specified as a list:
+
+binaries = [
+    "mytool",
+    "mytool-helper",
+]
+
+The paths are relative to the extracted archive directory.
+
+If an archive contains:
+
+mytool-linux-x86_64/
+├── mytool
+└── mytool-helper
+
+use:
+
+binaries = [
+    "mytool-linux-x86_64/mytool",
+    "mytool-linux-x86_64/mytool-helper",
+]
+
+### Supported archive formats
+
+The GitHub archive provider supports:
+
+.tar.gz
+.tgz
+.tar
+.tar.bz2
+.tbz2
+.tar.xz
+.txz
+.tar.zst
 
 ------------------------------------------------------------------------
 
 # 10. GitHub Assets and Architectures
 
-GitHub AppImage packages can define different assets for different CPU
+GitHub AppImage and archive packages can define different assets for different CPU
+
 architectures.
 
 Example:
 
 ``` toml
+
 [packages.neovim.debian.assets.arm64]
+
 name = "nvim-linux-arm64.appimage"
 
 [packages.neovim.debian.assets.x86_64]
+
 name = "nvim-linux-x86_64.appimage"
+
 ```
 
 The supported architecture names currently used by `pkg` are:
 
 | Machine architecture   | Manifest architecture   |
+
 | ---------------------- | ----------------------- |
+
 | `x86_64` / `amd64`     | `x86_64`                |
+
 | `aarch64` / `arm64`    | `arm64`                 |
+
 | `armv7l` / `armv7`     | `armv7`                 |
 
 `pkg` detects the current architecture and selects the corresponding
+
 asset.
 
 For example, on an ARM64 machine:
 
 ``` text
+
 arm64
-    ↓
+
+â†“
+
 assets.arm64
-    ↓
+
+â†“
+
 nvim-linux-arm64.appimage
+
 ```
 
 ------------------------------------------------------------------------
@@ -345,23 +565,33 @@ nvim-linux-arm64.appimage
 A complete Neovim definition can look like:
 
 ``` toml
+
 [packages.neovim]
+
 command = "nvim"
 
 [packages.neovim.debian]
+
 provider = "github"
+
 repo = "neovim/neovim"
+
 type = "appimage"
 
 [packages.neovim.debian.assets.arm64]
+
 name = "nvim-linux-arm64.appimage"
 
 [packages.neovim.debian.assets.x86_64]
+
 name = "nvim-linux-x86_64.appimage"
 
 [packages.neovim.arch]
+
 provider = "aur"
+
 name = "neovim"
+
 ```
 
 On Debian/Ubuntu, `pkg` uses the GitHub AppImage.
@@ -377,9 +607,13 @@ A package can also define configuration files.
 The basic form is:
 
 ``` toml
+
 [packages.neovim.config]
+
 source = "config/nvim"
+
 destination = "~/.config/nvim"
+
 ```
 
 `source` is relative to the root of the `pkg` repository.
@@ -387,13 +621,21 @@ destination = "~/.config/nvim"
 For example:
 
 ``` text
+
 .
-├── packages.toml
-├── pkg.py
-└── config/
-    └── nvim/
-        ├── init.lua
-        └── lua/
+
+â”œâ”€â”€ packages.toml
+
+â”œâ”€â”€ pkg.py
+
+â””â”€â”€ config/
+
+â””â”€â”€ nvim/
+
+    â”œâ”€â”€ init.lua
+
+    â””â”€â”€ lua/
+
 ```
 
 The destination supports `~` and environment-variable expansion.
@@ -401,7 +643,9 @@ The destination supports `~` and environment-variable expansion.
 For example:
 
 ``` toml
+
 destination = "~/.config/nvim"
+
 ```
 
 ------------------------------------------------------------------------
@@ -411,6 +655,7 @@ destination = "~/.config/nvim"
 There are currently two configuration modes:
 
 -   `link`
+
 -   `contents`
 
 If `mode` is omitted, it defaults to `link`.
@@ -420,24 +665,35 @@ If `mode` is omitted, it defaults to `link`.
 `link` links the source itself to the destination.
 
 ``` toml
+
 [packages.neovim.config]
+
 source = "config/nvim"
+
 destination = "~/.config/nvim"
+
 mode = "link"
+
 ```
 
 This results in:
 
 ``` text
+
 ~/.config/nvim -> <repository>/config/nvim
+
 ```
 
 Because `link` is the default, this can also be written as:
 
 ``` toml
+
 [packages.neovim.config]
+
 source = "config/nvim"
+
 destination = "~/.config/nvim"
+
 ```
 
 ------------------------------------------------------------------------
@@ -445,36 +701,53 @@ destination = "~/.config/nvim"
 # 14. `contents`
 
 `contents` is useful when a configuration directory contains files that
+
 need to be placed directly into another directory.
 
 For example, Zsh configuration files normally live directly in `$HOME`:
 
 ``` text
+
 config/
-└── zsh/
-    ├── .zshrc
-    ├── .zprofile
-    └── .zshenv
+
+â””â”€â”€ zsh/
+
+â”œâ”€â”€ .zshrc
+
+â”œâ”€â”€ .zprofile
+
+â””â”€â”€ .zshenv
+
 ```
 
 Use:
 
 ``` toml
+
 [packages.zsh.config]
+
 source = "config/zsh"
+
 destination = "~"
+
 mode = "contents"
+
 ```
 
 The result is:
 
 ``` text
+
 ~/.zshrc    -> <repository>/config/zsh/.zshrc
+
 ~/.zprofile -> <repository>/config/zsh/.zprofile
+
 ~/.zshenv   -> <repository>/config/zsh/.zshenv
+
 ```
 
 This keeps the configuration files organized inside the repository
+
 without requiring the repository itself to live in `$HOME`.
 
 ------------------------------------------------------------------------
@@ -486,17 +759,25 @@ A package can have multiple independent configuration entries.
 Use TOML's array-of-tables syntax:
 
 ``` toml
+
 [[packages.zsh.config]]
+
 source = "config/zsh/.zshrc"
+
 destination = "~/.zshrc"
 
 [[packages.zsh.config]]
+
 source = "config/zsh/.zprofile"
+
 destination = "~/.zprofile"
 
 [[packages.zsh.config]]
+
 source = "config/zsh/.zshenv"
+
 destination = "~/.zshenv"
+
 ```
 
 This is useful when configuration files belong in different directories.
@@ -504,13 +785,19 @@ This is useful when configuration files belong in different directories.
 For example:
 
 ``` toml
+
 [[packages.git.config]]
+
 source = "config/git/.gitconfig"
+
 destination = "~/.gitconfig"
 
 [[packages.git.config]]
+
 source = "config/git/ignore"
+
 destination = "~/.config/git/ignore"
+
 ```
 
 A package can therefore manage configuration across multiple locations.
@@ -524,20 +811,29 @@ Each configuration entry has its own mode.
 For example:
 
 ``` toml
+
 [[packages.example.config]]
+
 source = "config/example/main"
+
 destination = "~/.config/example"
+
 mode = "link"
 
 [[packages.example.config]]
+
 source = "config/example/home"
+
 destination = "~"
+
 mode = "contents"
+
 ```
 
 The first entry links the directory itself.
 
 The second entry links everything inside `config/example/home` into
+
 `$HOME`.
 
 ------------------------------------------------------------------------
@@ -547,7 +843,9 @@ The second entry links everything inside `config/example/home` into
 `pkg` does not silently overwrite an existing real file or directory.
 
 If the destination already contains a real file or directory,
+
 configuration installation fails rather than destroying the existing
+
 data.
 
 Existing symlinks can be replaced when necessary.
@@ -555,10 +853,13 @@ Existing symlinks can be replaced when necessary.
 For example, if:
 
 ``` text
+
 ~/.zshrc
+
 ```
 
 is already a symlink to the repository's `.zshrc`, `pkg` recognizes that
+
 it is already correctly configured.
 
 ------------------------------------------------------------------------
@@ -568,33 +869,47 @@ it is already correctly configured.
 A typical Neovim definition:
 
 ``` toml
+
 [packages.neovim]
+
 command = "nvim"
 
 [packages.neovim.debian]
+
 provider = "github"
+
 repo = "neovim/neovim"
+
 type = "appimage"
 
 [packages.neovim.debian.assets.arm64]
+
 name = "nvim-linux-arm64.appimage"
 
 [packages.neovim.debian.assets.x86_64]
+
 name = "nvim-linux-x86_64.appimage"
 
 [packages.neovim.arch]
+
 provider = "aur"
+
 name = "neovim"
 
 [packages.neovim.config]
+
 source = "config/nvim"
+
 destination = "~/.config/nvim"
+
 ```
 
 Install:
 
 ``` bash
+
 pkg install neovim
+
 ```
 
 ------------------------------------------------------------------------
@@ -602,37 +917,55 @@ pkg install neovim
 # 19. Example: Zsh
 
 ``` toml
+
 [packages.zsh]
+
 command = "zsh"
 
 [packages.zsh.debian]
+
 provider = "apt"
+
 name = "zsh"
 
 [packages.zsh.arch]
+
 provider = "pacman"
+
 name = "zsh"
 
 [packages.zsh.config]
+
 source = "config/zsh"
+
 destination = "~"
+
 mode = "contents"
+
 ```
 
 Repository:
 
 ``` text
+
 config/
-└── zsh/
-    ├── .zshrc
-    ├── .zprofile
-    └── .zshenv
+
+â””â”€â”€ zsh/
+
+â”œâ”€â”€ .zshrc
+
+â”œâ”€â”€ .zprofile
+
+â””â”€â”€ .zshenv
+
 ```
 
 Install:
 
 ``` bash
+
 pkg install zsh
+
 ```
 
 ------------------------------------------------------------------------
@@ -640,147 +973,253 @@ pkg install zsh
 # 20. Example: Common Development Tools
 
 A useful way to represent packages that don't correspond to one
+
 particular application is to create a logical group:
 
 ``` toml
+
 [packages.common]
+
 ```
 
 Then define the packages per distribution:
 
 ``` toml
+
 [packages.common.debian]
+
 provider = "apt"
+
 name = [
-    "eza",
-    "build-essential",
-    "cmake",
-    "ninja-build",
-    "gdb",
+
+"eza",
+
+"build-essential",
+
+"cmake",
+
+"ninja-build",
+
+"gdb",
+
 ]
 
 [packages.common.arch]
+
 provider = "pacman"
+
 name = [
-    "eza",
-    "base-devel",
-    "cmake",
-    "ninja",
-    "gdb",
+
+"eza",
+
+"base-devel",
+
+"cmake",
+
+"ninja",
+
+"gdb",
+
 ]
+
 ```
 
 Now:
 
 ``` bash
+
 pkg install common
+
 ```
 
 installs the appropriate group for the current distribution.
 
 This is particularly useful when the equivalent package has a different
+
 name on different distributions.
 
 For example:
 
 ``` text
+
 Debian        Arch
+
 --------      ---------
+
 build-essential
-              base-devel
+
+          base-devel
+
 ```
 
 ------------------------------------------------------------------------
 
-# 21. Example Complete Manifest
+# 21. Example: GitHub Archive
+
+A package distributed as architecture-specific .tar.gz archives can be
+defined as:
+
+[packages.mytool]
+command = "mytool"
+
+[packages.mytool.debian]
+provider = "github"
+repo = "owner/mytool"
+type = "archive"
+binaries = ["mytool"]
+
+[packages.mytool.debian.assets.x86_64]
+name = "mytool-linux-x86_64.tar.gz"
+
+[packages.mytool.debian.assets.arm64]
+name = "mytool-linux-arm64.tar.gz"
+
+After installation, the binary is available as:
+
+~/.local/bin/mytool
+
+and the versioned files remain under:
+
+~/.local/opt/mytool/<version>/
+
+------------------------------------------------------------------------
+
+# 22. Example Complete Manifest
 
 Putting everything together:
 
 ``` toml
+
 # ---------------------------------------------------------------------------
+
 # Neovim
+
 # ---------------------------------------------------------------------------
 
 [packages.neovim]
+
 command = "nvim"
 
 [packages.neovim.debian]
+
 provider = "github"
+
 repo = "neovim/neovim"
+
 type = "appimage"
 
 [packages.neovim.debian.assets.arm64]
+
 name = "nvim-linux-arm64.appimage"
 
 [packages.neovim.debian.assets.x86_64]
+
 name = "nvim-linux-x86_64.appimage"
 
 [packages.neovim.arch]
+
 provider = "aur"
+
 name = "neovim"
 
 [packages.neovim.config]
+
 source = "config/nvim"
+
 destination = "~/.config/nvim"
 
 
+
 # ---------------------------------------------------------------------------
+
 # Zsh
+
 # ---------------------------------------------------------------------------
 
 [packages.zsh]
+
 command = "zsh"
 
 [packages.zsh.debian]
+
 provider = "apt"
+
 name = "zsh"
 
 [packages.zsh.arch]
+
 provider = "pacman"
+
 name = "zsh"
 
 [packages.zsh.config]
+
 source = "config/zsh"
+
 destination = "~"
+
 mode = "contents"
 
 
+
 # ---------------------------------------------------------------------------
+
 # Common development tools
+
 # ---------------------------------------------------------------------------
 
 [packages.common]
 
 [packages.common.debian]
+
 provider = "apt"
+
 name = [
-    "eza",
-    "build-essential",
-    "cmake",
-    "ninja-build",
-    "gdb",
+
+"eza",
+
+"build-essential",
+
+"cmake",
+
+"ninja-build",
+
+"gdb",
+
 ]
 
 [packages.common.arch]
+
 provider = "pacman"
+
 name = [
-    "eza",
-    "base-devel",
-    "cmake",
-    "ninja",
-    "gdb",
+
+"eza",
+
+"base-devel",
+
+"cmake",
+
+"ninja",
+
+"gdb",
+
 ]
+
 ```
 
 ------------------------------------------------------------------------
 
-# 22. Quick Reference
+# 23. Quick Reference
 
 ## Package
 
 ``` toml
+
 [packages.<name>]
+
 command = "<executable>"
+
 ```
 
 `command` is optional.
@@ -788,117 +1227,178 @@ command = "<executable>"
 ## Debian / Ubuntu
 
 ``` toml
+
 [packages.<name>.debian]
+
 provider = "apt"
+
 name = "<package>"
+
 ```
 
 or:
 
 ``` toml
+
 name = ["<package1>", "<package2>"]
+
 ```
 
 ## Arch repository
 
 ``` toml
+
 [packages.<name>.arch]
+
 provider = "pacman"
+
 name = "<package>"
+
 ```
 
 or:
 
 ``` toml
+
 name = ["<package1>", "<package2>"]
+
 ```
 
 ## Arch AUR
 
 ``` toml
+
 [packages.<name>.arch]
+
 provider = "aur"
+
 name = "<package>"
+
 ```
 
 or:
 
 ``` toml
+
 name = ["<package1>", "<package2>"]
+
 ```
 
 ## GitHub AppImage
 
 ``` toml
+
 [packages.<name>.debian]
+
 provider = "github"
+
 repo = "<owner>/<repository>"
+
 type = "appimage"
 
 [packages.<name>.debian.assets.<architecture>]
+
 name = "<asset-name>"
+
 ```
+
+## GitHub Archive
+
+[packages.<name>.debian]
+provider = "github"
+repo = "<owner>/<repository>"
+type = "archive"
+binaries = ["<binary>"]
+
+[packages.<name>.debian.assets.<architecture>]
+name = "<archive-name>"
 
 ## Configuration
 
 ``` toml
+
 [packages.<name>.config]
+
 source = "<repository-path>"
+
 destination = "<destination-path>"
+
 mode = "link"
+
 ```
 
 or:
 
 ``` toml
+
 [packages.<name>.config]
+
 source = "<repository-path>"
+
 destination = "<destination-path>"
+
 mode = "contents"
+
 ```
 
 ## Multiple configurations
 
 ``` toml
+
 [[packages.<name>.config]]
+
 source = "<repository-path>"
+
 destination = "<destination-path>"
 
 [[packages.<name>.config]]
+
 source = "<another-repository-path>"
+
 destination = "<another-destination-path>"
+
 ```
 
 ------------------------------------------------------------------------
 
-# 23. Commands
+# 24. Commands
 
 Install everything:
 
 ``` bash
+
 pkg install
+
 ```
 
 Install selected logical packages:
 
 ``` bash
+
 pkg install neovim
+
 ```
 
 Install several logical packages:
 
 ``` bash
+
 pkg install neovim zsh common
+
 ```
 
 Check installed packages:
 
 ``` bash
+
 pkg check
+
 ```
 
 Show the `pkg` version:
 
 ``` bash
+
 pkg --version
+
 ```
