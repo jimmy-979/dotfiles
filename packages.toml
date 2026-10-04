@@ -51,9 +51,6 @@ name = "oss-cad-suite"
 provider = "github"
 repo = "YosysHQ/oss-cad-suite-build"
 type = "archive"
-binary_dir = "bin"
-lib_dir = "lib"
-libexec_dir = "libexec"
 
 [packages.oss-cad-suite.debian.assets.arm64]
 name = "oss-cad-suite-linux-arm64-.*.tgz"

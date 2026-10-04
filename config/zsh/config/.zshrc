@@ -5,7 +5,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/opt/oss-cad-suite/current/bin:$HOME/.local/bin:$PATH"
 
 # ohmyzsh python plugin settings
 PYTHON_AUTO_VRUN=true

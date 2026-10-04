@@ -1,0 +1,11 @@
+{
+    // Format on save for all files
+    "editor.formatOnSave": true,
+    // Python settings
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    }
+}

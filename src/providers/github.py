@@ -8,12 +8,24 @@ from typing import Any
 
 from packages import LOCAL_BIN, LOCAL_OPT, Colors, pkg_print
 
-LOCAL_LIB = Path.home() / ".local" / "lib"
-LOCAL_LIBEXEC = Path.home() / ".local" / "libexec"
 
+def github_release(
+    repo: str,
+    release: str | None = None,
+) -> dict[str, Any]:
+    """
+    Get a GitHub release.
 
-def latest_release(repo: str) -> dict[str, Any]:
-    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    If release is omitted or set to "latest", the latest release
+    is returned.
+
+    Otherwise, release is treated as a GitHub release tag.
+    """
+
+    if release is None or release == "latest":
+        url = f"https://api.github.com/repos/{repo}/releases/latest"
+    else:
+        url = f"https://api.github.com/repos/{repo}/releases/tags/{release}"
 
     request = urllib.request.Request(
         url,
@@ -43,7 +55,10 @@ def find_asset(release: dict, pattern: str) -> dict:
     raise RuntimeError(f"No GitHub release asset matches regex: {pattern}")
 
 
-def download_file(url: str, destination: Path) -> None:
+def download_file(
+    url: str,
+    destination: Path,
+) -> None:
     destination.parent.mkdir(
         parents=True,
         exist_ok=True,
@@ -134,6 +149,38 @@ def replace_symlink(
     destination.symlink_to(source)
 
 
+def get_release(
+    package_name: str,
+    repo: str,
+    config: dict,
+) -> dict[str, Any]:
+    """
+    Get the configured GitHub release.
+
+    If 'release' is omitted, the latest release is used.
+    """
+
+    release = config.get("release")
+
+    if release is not None and (not isinstance(release, str) or not release):
+        raise RuntimeError(f"{package_name}: 'release' must be a non-empty string")
+
+    if release is None or release == "latest":
+        release_description = "latest"
+    else:
+        release_description = release
+
+    pkg_print(
+        f"Checking GitHub release: {repo} ({release_description})",
+        color=Colors.YELLOW,
+    )
+
+    return github_release(
+        repo,
+        release,
+    )
+
+
 def install_appimage(
     package_name: str,
     command: str,
@@ -155,12 +202,11 @@ def install_appimage(
         command,
     )
 
-    pkg_print(
-        f"Checking GitHub release: {repo}",
-        color=Colors.YELLOW,
+    release = get_release(
+        package_name,
+        repo,
+        config,
     )
-
-    release = latest_release(repo)
 
     tag = release.get("tag_name")
 
@@ -245,6 +291,43 @@ def install_appimage(
     )
 
 
+def link_directory(
+    package_name: str,
+    source_root: Path,
+    destination_root: Path,
+    description: str,
+) -> None:
+    """
+    Link all direct children of source_root into destination_root.
+
+    Existing real files/directories are never replaced.
+    Existing symlinks are replaced.
+    """
+
+    if not source_root.is_dir():
+        raise RuntimeError(
+            f"{package_name}: {description} directory not found: {source_root}"
+        )
+
+    destination_root.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    for entry in source_root.iterdir():
+        destination = destination_root / entry.name
+
+        replace_symlink(
+            destination,
+            entry,
+        )
+
+        pkg_print(
+            f"Linked {destination} -> {entry}",
+            color=Colors.GREEN,
+        )
+
+
 def install_archive(
     package_name: str,
     config: dict,
@@ -260,8 +343,9 @@ def install_archive(
 
     asset_pattern = assets[arch]["name"]
 
-    # If binaries is omitted or empty, all regular files
-    # directly inside binary_dir will be linked.
+    # If binaries is omitted or empty, all regular files directly inside
+    # the selected binary directory will be linked when binary_dir is not
+    # configured.
     binaries = config.get("binaries")
 
     if binaries is None:
@@ -280,32 +364,20 @@ def install_archive(
             f"{package_name}: 'binaries' must contain only non-empty strings"
         )
 
-    # binary_dir is required.
+    # binary_dir is optional.
+    #
+    # When specified, the archive is treated as a self-contained package
+    # directory and nothing is linked into ~/.local/bin.
     binary_dir = config.get("binary_dir")
 
-    if not isinstance(binary_dir, str) or not binary_dir:
+    if binary_dir is not None and (not isinstance(binary_dir, str) or not binary_dir):
         raise RuntimeError(f"{package_name}: 'binary_dir' must be a non-empty string")
 
-    # lib_dir is optional.
-    lib_dir = config.get("lib_dir")
-
-    if lib_dir is not None and (not isinstance(lib_dir, str) or not lib_dir):
-        raise RuntimeError(f"{package_name}: 'lib_dir' must be a non-empty string")
-
-    # libexec_dir is optional.
-    libexec_dir = config.get("libexec_dir")
-
-    if libexec_dir is not None and (not isinstance(libexec_dir, str) or not libexec_dir):
-        raise RuntimeError(
-            f"{package_name}: 'libexec_dir' must be a non-empty string"
-        )
-
-    pkg_print(
-        f"Checking GitHub release: {repo}",
-        color=Colors.YELLOW,
+    release = get_release(
+        package_name,
+        repo,
+        config,
     )
-
-    release = latest_release(repo)
 
     tag = release.get("tag_name")
 
@@ -338,17 +410,8 @@ def install_archive(
     version_root = package_root / tag
     archive_path = version_root / asset_name
 
-    resolved_binary_dir = binary_dir.format(version=tag)
-
-    resolved_lib_dir = lib_dir.format(version=tag) if lib_dir is not None else None
-
-    resolved_libexec_dir = (
-        libexec_dir.format(version=tag) if libexec_dir is not None else None
-    )
-
-    LOCAL_BIN.mkdir(
-        parents=True,
-        exist_ok=True,
+    resolved_binary_dir = (
+        binary_dir.format(version=tag) if binary_dir is not None else None
     )
 
     package_root.mkdir(
@@ -367,16 +430,29 @@ def install_archive(
             archive_path,
         )
 
-    archive_root = find_archive_root(
-        version_root,
-        resolved_binary_dir,
-    )
+    if resolved_binary_dir is not None:
+        # binary_dir explicitly identifies a directory inside the archive.
+        archive_root = find_archive_root(
+            version_root,
+            resolved_binary_dir,
+        )
+        binary_root = archive_root / resolved_binary_dir
+    else:
+        # Without binary_dir, binaries are expected at the archive root or
+        # inside its single top-level directory.
+        directories = [entry for entry in version_root.iterdir() if entry.is_dir()]
 
-    binary_root = archive_root / resolved_binary_dir
+        archive_root = directories[0] if len(directories) == 1 else version_root
+        binary_root = archive_root
 
-    needs_extraction = not binary_root.is_dir() or (
-        binaries and any(not (binary_root / binary).is_file() for binary in binaries)
-    )
+    needs_extraction = not binary_root.is_dir()
+
+    if (resolved_binary_dir is None and binaries) or (
+        resolved_binary_dir is not None and binaries
+    ):
+        needs_extraction = needs_extraction or any(
+            not (binary_root / binary).is_file() for binary in binaries
+        )
 
     if needs_extraction:
         pkg_print(
@@ -391,10 +467,7 @@ def install_archive(
             ) as archive:
                 root = version_root.resolve()
 
-                # Protect against paths such as:
-                #
-                # ../../somewhere/file
-                #
+                # Protect against paths such as ../../somewhere/file.
                 for member in archive.getmembers():
                     target = (version_root / member.name).resolve()
 
@@ -414,29 +487,59 @@ def install_archive(
                 f"{package_name}: failed to extract {asset_name}: {exc}"
             ) from exc
 
-        # Recalculate because the archive may have introduced
+        # Recalculate after extraction because the archive may have introduced
         # a top-level directory.
-        archive_root = find_archive_root(
-            version_root,
-            resolved_binary_dir,
-        )
-
-        binary_root = archive_root / resolved_binary_dir
+        if resolved_binary_dir is not None:
+            archive_root = find_archive_root(
+                version_root,
+                resolved_binary_dir,
+            )
+            binary_root = archive_root / resolved_binary_dir
+        else:
+            directories = [entry for entry in version_root.iterdir() if entry.is_dir()]
+            archive_root = directories[0] if len(directories) == 1 else version_root
+            binary_root = archive_root
 
     if not binary_root.is_dir():
         raise RuntimeError(f"{package_name}: binary directory not found: {binary_root}")
 
-    # If binaries wasn't specified, discover all regular
-    # files directly inside binary_root.
-    #
-    # Subdirectories are intentionally ignored.
+    # Maintain a stable path to the extracted package directory. For an
+    # archive such as package-version/bin, this points to package-version.
+    current_link = package_root / "current"
+
+    replace_symlink(
+        current_link,
+        archive_root,
+    )
+
+    pkg_print(
+        f"Linked {current_link} -> {archive_root}",
+        color=Colors.GREEN,
+    )
+
+    # If binary_dir is configured, the archive is a self-contained package.
+    # Do not expose its binaries individually through ~/.local/bin.
+    if binary_dir is not None:
+        pkg_print(
+            f"Installed {package_name} {tag}",
+            color=Colors.GREEN,
+            bold=True,
+        )
+        return
+
+    # If binaries wasn't specified, discover all regular files directly
+    # inside binary_root. Subdirectories are intentionally ignored.
     if not binaries:
         binaries = [path.name for path in binary_root.iterdir() if path.is_file()]
 
         if not binaries:
             raise RuntimeError(f"{package_name}: no binaries found in {binary_root}")
 
-    # Link binaries.
+    LOCAL_BIN.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
     for binary in binaries:
         binary_path = binary_root / binary
 
@@ -458,82 +561,6 @@ def install_archive(
             f"Linked {command_link} -> {binary_path}",
             color=Colors.GREEN,
         )
-
-    # Link library directory if configured.
-    #
-    # Example:
-    #
-    #   lib/
-    #   └── yosys/
-    #
-    # becomes:
-    #
-    #   ~/.local/lib/yosys
-    #
-    # pointing to the versioned directory.
-    if resolved_lib_dir is not None:
-        lib_root = archive_root / resolved_lib_dir
-
-        if not lib_root.is_dir():
-            raise RuntimeError(
-                f"{package_name}: library directory not found: {lib_root}"
-            )
-
-        LOCAL_LIB.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        for entry in lib_root.iterdir():
-            destination = LOCAL_LIB / entry.name
-
-            replace_symlink(
-                destination,
-                entry,
-            )
-
-            pkg_print(
-                f"Linked {destination} -> {entry}",
-                color=Colors.GREEN,
-            )
-
-    # Link libexec directory if configured.
-    #
-    # Example:
-    #
-    #   libexec/
-    #   └── yosys-helper
-    #
-    # becomes:
-    #
-    #   ~/.local/libexec/yosys-helper
-    #
-    # pointing to the versioned executable.
-    if resolved_libexec_dir is not None:
-        libexec_root = archive_root / resolved_libexec_dir
-
-        if not libexec_root.is_dir():
-            raise RuntimeError(
-                f"{package_name}: libexec directory not found: {libexec_root}"
-            )
-
-        LOCAL_LIBEXEC.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        for entry in libexec_root.iterdir():
-            destination = LOCAL_LIBEXEC / entry.name
-
-            replace_symlink(
-                destination,
-                entry,
-            )
-
-            pkg_print(
-                f"Linked {destination} -> {entry}",
-                color=Colors.GREEN,
-            )
 
     pkg_print(
         f"Installed {package_name} {tag}",
@@ -557,7 +584,7 @@ def installed_version(
 
 
 def release_version(repo: str) -> str:
-    tag = latest_release(repo).get("tag_name")
+    tag = github_release(repo).get("tag_name")
 
     if not tag:
         raise RuntimeError(f"{repo}: no tag_name")

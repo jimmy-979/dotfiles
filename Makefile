@@ -16,7 +16,11 @@ help:
 	@echo "  help       Show this help message"
 
 install:
-	@$(PKG) install $(word 2,$(MAKECMDGOALS))
+	@$(PKG) install $(filter-out install,$(MAKECMDGOALS))
 
 check:
 	@$(PKG) check
+
+# Allow package names to be passed as additional arguments.
+%:
+	@:
