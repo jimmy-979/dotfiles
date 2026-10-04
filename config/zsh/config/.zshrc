@@ -7,6 +7,9 @@ fi
 
 export PATH="$HOME/.local/bin:$PATH"
 
+# ohmyzsh python plugin settings
+PYTHON_AUTO_VRUN=true
+
 # source antidote
 source ${ZDOTDIR:-$HOME}/.antidote/antidote.zsh
 

@@ -1,1 +1,3 @@
 romkatv/powerlevel10k
+getantidote/use-omz
+ohmyzsh/ohmyzsh path:plugins/python
