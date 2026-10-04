@@ -5,7 +5,10 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-export PATH="$HOME/.local/opt/oss-cad-suite/current/bin:$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/15.2.0-1.1/.content/bin:$PATH"
+export PATH="$HOME/.local/opt/oss-cad-suite/current/bin:$PATH"
+export PATH="$HOME/.local/opt/sail_riscv/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 # ohmyzsh python plugin settings
 PYTHON_AUTO_VRUN=true
@@ -75,3 +78,5 @@ alias tree='eza --tree --icons --group-directories-first'
 
 # Finalize Powerlevel10k instant prompt
 (( ! ${+functions[p10k]} )) || p10k finalize
+
+eval "$($HOME/.local/bin/mise activate zsh)"

@@ -5,7 +5,7 @@
 
 [packages.common.debian]
 provider = "apt"
-name = ["build-essential", "man", "eza"]
+name = ["eza", "tree", "curl", "python3", "git", "npm"]
 
 # --------------------------------------------------------------------------- #
 # zsh
