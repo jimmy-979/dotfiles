@@ -2,3 +2,9 @@ __pycache__/
 config/zsh/config/.zcompdump
 config/zsh/config/.zsh_history
 config/zsh/config/.zsh_plugins.zsh
+config/tmux/config/plugins/tmux
+config/tmux/config/plugins/tmux-cpu
+config/tmux/config/plugins/tmux-sensible
+config/tmux/config/plugins/tpm
+tmux-server*
+tmux-client*
