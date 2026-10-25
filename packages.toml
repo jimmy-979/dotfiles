@@ -69,8 +69,17 @@ repo = "chipsalliance/verible"
 type = "archive"
 binary_dir = "bin"
 
+[packages.verible.arch]
+provider = "github"
+repo = "chipsalliance/verible"
+type = "archive"
+binary_dir = "bin"
+
 [packages.verible.debian.assets.arm64]
 name = "verible-.*-linux-static-arm64.tar.gz"
+
+[packages.verible.arch.assets.x86_64]
+name = "verible-.*-linux-static-x86_64.tar.gz"
 
 # --------------------------------------------------------------------------- #
 # oss-cad suite
@@ -83,5 +92,14 @@ provider = "github"
 repo = "YosysHQ/oss-cad-suite-build"
 type = "archive"
 
+[packages.oss-cad-suite.arch]
+provider = "github"
+repo = "YosysHQ/oss-cad-suite-build"
+type = "archive"
+
 [packages.oss-cad-suite.debian.assets.arm64]
 name = "oss-cad-suite-linux-arm64-.*.tgz"
+
+
+[packages.oss-cad-suite.arch.assets.x86_64]
+name = "oss-cad-suite-linux-x64-.*.tgz"
