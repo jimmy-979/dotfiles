@@ -91,15 +91,16 @@ name = "oss-cad-suite"
 provider = "github"
 repo = "YosysHQ/oss-cad-suite-build"
 type = "archive"
+binary_dir = "bin"
 
 [packages.oss-cad-suite.arch]
 provider = "github"
 repo = "YosysHQ/oss-cad-suite-build"
 type = "archive"
+binary_dir = "bin"
 
 [packages.oss-cad-suite.debian.assets.arm64]
 name = "oss-cad-suite-linux-arm64-.*.tgz"
-
 
 [packages.oss-cad-suite.arch.assets.x86_64]
 name = "oss-cad-suite-linux-x64-.*.tgz"
