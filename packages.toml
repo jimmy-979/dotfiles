@@ -104,3 +104,27 @@ name = "oss-cad-suite-linux-arm64-.*.tgz"
 
 [packages.oss-cad-suite.arch.assets.x86_64]
 name = "oss-cad-suite-linux-x64-.*.tgz"
+
+# --------------------------------------------------------------------------- #
+# sv2v
+# --------------------------------------------------------------------------- #
+[packages.sv2v]
+name = "sv2v"
+
+[packages.sv2v.debian]
+provider = "github"
+repo = "zachjs/sv2v"
+type = "archive"
+binary_dir = "sv2v-Linux"
+
+[packages.sv2v.arch]
+provider = "github"
+repo = "zachjs/sv2v"
+type = "archive"
+binary_dir = "sv2v-Linux"
+
+[packages.sv2v.debian.assets.arm64]
+name = "sv2v-Linux.zip"
+
+[packages.sv2v.arch.assets.x86_64]
+name = "sv2v-Linux.zip"
