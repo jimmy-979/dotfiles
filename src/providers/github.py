@@ -3,6 +3,7 @@ import re
 import shutil
 import tarfile
 import urllib.request
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -393,6 +394,7 @@ def install_archive(
     download_url = asset["browser_download_url"]
 
     supported = (
+        ".zip",
         ".tar.gz",
         ".tgz",
         ".tar",
@@ -461,28 +463,42 @@ def install_archive(
         )
 
         try:
-            with tarfile.open(
-                archive_path,
-                "r:*",
-            ) as archive:
-                root = version_root.resolve()
+            root = version_root.resolve()
 
-                # Protect against paths such as ../../somewhere/file.
-                for member in archive.getmembers():
-                    target = (version_root / member.name).resolve()
+            if asset_name.endswith(".zip"):
+                with zipfile.ZipFile(archive_path) as archive:
+                    # Protect against paths such as ../../somewhere/file.
+                    for member in archive.infolist():
+                        target = (version_root / member.filename).resolve()
 
-                    if target != root and root not in target.parents:
-                        raise RuntimeError(
-                            f"{package_name}: archive contains "
-                            f"unsafe path: {member.name!r}"
-                        )
+                        if target != root and root not in target.parents:
+                            raise RuntimeError(
+                                f"{package_name}: archive contains "
+                                f"unsafe path: {member.filename!r}"
+                            )
 
-                archive.extractall(
-                    version_root,
-                    filter="data",
-                )
+                    archive.extractall(version_root)
+            else:
+                with tarfile.open(
+                    archive_path,
+                    "r:*",
+                ) as archive:
+                    # Protect against paths such as ../../somewhere/file.
+                    for member in archive.getmembers():
+                        target = (version_root / member.name).resolve()
 
-        except (tarfile.TarError, OSError) as exc:
+                        if target != root and root not in target.parents:
+                            raise RuntimeError(
+                                f"{package_name}: archive contains "
+                                f"unsafe path: {member.name!r}"
+                            )
+
+                    archive.extractall(
+                        version_root,
+                        filter="data",
+                    )
+
+        except (tarfile.TarError, zipfile.BadZipFile, OSError) as exc:
             raise RuntimeError(
                 f"{package_name}: failed to extract {asset_name}: {exc}"
             ) from exc

@@ -9,6 +9,7 @@ export PATH="$HOME/.local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/15.2.0-1.1/
 export PATH="$HOME/.local/opt/oss-cad-suite/current/bin:$PATH"
 export PATH="$HOME/.local/opt/verible/current/bin:$PATH"
 export PATH="$HOME/.local/opt/sail_riscv/bin:$PATH"
+export PATH="$HOME/.local/opt/sv2v/current/sv2v-Linux:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
 # ohmyzsh python plugin settings
