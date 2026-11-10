@@ -558,11 +558,11 @@ def install_archive(
                 for member in archive.getmembers():
                     target = (version_root / member.name).resolve()
 
-                        if target != root and root not in target.parents:
-                            raise RuntimeError(
-                                f"{package_name}: archive contains "
-                                f"unsafe path: {member.name!r}"
-                            )
+                    if target != root and root not in target.parents:
+                        raise RuntimeError(
+                            f"{package_name}: archive contains "
+                            f"unsafe path: {member.name!r}"
+                        )
 
                     archive.extractall(
                         version_root,
