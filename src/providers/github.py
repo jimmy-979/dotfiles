@@ -1,7 +1,9 @@
 import json
 import re
 import shutil
+import sys
 import tarfile
+import time
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -65,28 +67,111 @@ def download_file(
         exist_ok=True,
     )
 
-    pkg_print(
-        f"Downloading {url}",
-        color=Colors.YELLOW,
-    )
-
     request = urllib.request.Request(
         url,
         headers={"User-Agent": "dotfiles-pkg"},
     )
+
+    progress_stream = None
 
     try:
         with (
             urllib.request.urlopen(request) as response,
             destination.open("wb") as f,
         ):
-            shutil.copyfileobj(response, f)
+            if sys.stdout.isatty():
+                progress_stream = sys.stdout
+            elif sys.stderr.isatty():
+                progress_stream = sys.stderr
+
+            try:
+                total_size = int(response.headers.get("Content-Length", ""))
+            except ValueError:
+                total_size = 0
+
+            downloaded = 0
+            started_at = time.monotonic()
+            last_reported = started_at
+
+            while chunk := response.read(64 * 1024):
+                f.write(chunk)
+                downloaded += len(chunk)
+
+                now = time.monotonic()
+                if now - last_reported < 0.2 and downloaded != total_size:
+                    continue
+
+                elapsed = max(now - started_at, 0.001)
+                speed = downloaded / elapsed
+                progress = f"{downloaded / total_size:.1%}" if total_size else ""
+                size = (
+                    f"{_format_bytes(downloaded)} / {_format_bytes(total_size)}"
+                    if total_size
+                    else f"{_format_bytes(downloaded)}"
+                )
+                # Keep the progress display on one terminal row. Printing the
+                # full URL can make the line wrap; carriage returns cannot
+                # overwrite text that has wrapped onto another terminal row.
+                details = f"{progress} {size} at {_format_bytes(speed)}/s".strip()
+                label = f"pkg: Downloading {destination.name}"
+                terminal_width = shutil.get_terminal_size(fallback=(100, 20)).columns
+                available_label_width = max(0, terminal_width - len(details) - 3)
+
+                if len(label) > available_label_width:
+                    if available_label_width >= 3:
+                        label = label[: available_label_width - 3] + "..."
+                    else:
+                        label = label[:available_label_width]
+
+                status = f"{label} [{details}]" if label else f"[{details}]"
+                line = Colors.wrap(status, Colors.YELLOW)
+
+                if progress_stream is not None:
+                    progress_stream.write(f"\r{line}\033[K")
+                    progress_stream.flush()
+
+                last_reported = now
+
+            if total_size and downloaded != total_size:
+                raise OSError(
+                    f"incomplete download: expected {total_size} bytes, "
+                    f"received {downloaded}"
+                )
+
+            if progress_stream is not None:
+                progress_stream.write("\n")
+                progress_stream.flush()
+            else:
+                elapsed = max(time.monotonic() - started_at, 0.001)
+                progress = f"{downloaded / total_size:.1%}" if total_size else ""
+                size = (
+                    f"{_format_bytes(downloaded)} / {_format_bytes(total_size)}"
+                    if total_size
+                    else f"{_format_bytes(downloaded)}"
+                )
+                pkg_print(
+                    f"Downloaded {url} [{progress} {size} at "
+                    f"{_format_bytes(downloaded / elapsed)}/s]",
+                    color=Colors.YELLOW,
+                )
 
     except Exception as exc:
+        if progress_stream is not None:
+            progress_stream.write("\n")
+            progress_stream.flush()
         if destination.exists():
             destination.unlink()
 
         raise RuntimeError(f"Failed to download {url}: {exc}") from exc
+
+
+def _format_bytes(size: float) -> str:
+    value = float(size)
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if value < 1024 or unit == "TB":
+            return f"{value:.1f} {unit}"
+        value /= 1024
+    return f"{value:.1f} TB"
 
 
 def find_archive_root(
@@ -463,29 +548,15 @@ def install_archive(
         )
 
         try:
-            root = version_root.resolve()
+            with tarfile.open(
+                archive_path,
+                "r:*",
+            ) as archive:
+                root = version_root.resolve()
 
-            if asset_name.endswith(".zip"):
-                with zipfile.ZipFile(archive_path) as archive:
-                    # Protect against paths such as ../../somewhere/file.
-                    for member in archive.infolist():
-                        target = (version_root / member.filename).resolve()
-
-                        if target != root and root not in target.parents:
-                            raise RuntimeError(
-                                f"{package_name}: archive contains "
-                                f"unsafe path: {member.filename!r}"
-                            )
-
-                    archive.extractall(version_root)
-            else:
-                with tarfile.open(
-                    archive_path,
-                    "r:*",
-                ) as archive:
-                    # Protect against paths such as ../../somewhere/file.
-                    for member in archive.getmembers():
-                        target = (version_root / member.name).resolve()
+                # Protect against paths such as ../../somewhere/file.
+                for member in archive.getmembers():
+                    target = (version_root / member.name).resolve()
 
                         if target != root and root not in target.parents:
                             raise RuntimeError(
@@ -498,7 +569,7 @@ def install_archive(
                         filter="data",
                     )
 
-        except (tarfile.TarError, zipfile.BadZipFile, OSError) as exc:
+        except (tarfile.TarError, OSError) as exc:
             raise RuntimeError(
                 f"{package_name}: failed to extract {asset_name}: {exc}"
             ) from exc
