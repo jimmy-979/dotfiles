@@ -82,7 +82,7 @@ name = "verible-.*-linux-static-arm64.tar.gz"
 name = "verible-.*-linux-static-x86_64.tar.gz"
 
 # --------------------------------------------------------------------------- #
-# oss-cad suite
+# oss-cad-suite
 # --------------------------------------------------------------------------- #
 [packages.oss-cad-suite]
 name = "oss-cad-suite"
@@ -104,3 +104,27 @@ name = "oss-cad-suite-linux-arm64-.*.tgz"
 
 [packages.oss-cad-suite.arch.assets.x86_64]
 name = "oss-cad-suite-linux-x64-.*.tgz"
+
+# --------------------------------------------------------------------------- #
+# sail-riscv
+# --------------------------------------------------------------------------- #
+[packages.sail-riscv]
+name = "sail-riscv"
+
+[packages.sail-riscv.debian]
+provider = "github"
+repo = "riscv/sail-riscv"
+type = "archive"
+binary_dir = "bin"
+
+[packages.sail-riscv.arch]
+provider = "github"
+repo = "riscv/sail-riscv"
+type = "archive"
+binary_dir = "bin"
+
+[packages.sail-riscv.debian.assets.arm64]
+name = "sail-riscv-Linux-aarch64.tar.gz"
+
+[packages.sail-riscv.arch.assets.x86_64]
+name = "sail-riscv-Linux-x86_64.tar.gz"
